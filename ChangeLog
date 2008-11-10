@@ -1,0 +1,9 @@
+2008-11-10  Yves BLUSSEAU  <yblusseau@cpan.org>
+
+	* Version 0.02 released
+	* lib/POE/Component/Server/BigBrother.pm (_on_client_input):
+	  retrieve period for enable/disable messages
+
+2008-06-24  Yves BLUSSEAU  <yblusseau@cpan.org>
+
+	* Version 0.01 released

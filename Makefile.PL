@@ -1,5 +1,13 @@
+use strict;
 use ExtUtils::MakeMaker;
+use File::Spec::Functions;
 
+
+# regenerate README
+if (eval "use Pod::Text; 1") {
+    my $parser = Pod::Text->new;
+    $parser->parse_from_file(catfile(qw(lib POE Component Server BigBrother.pm)), "README");
+}
 
 WriteMakefile(
     NAME          => 'POE::Component::Server::BigBrother',
@@ -14,7 +22,7 @@ WriteMakefile(
                    'POE::Component::Server::TCP'          => 0,
                    'POE::Component::Pluggable'            => 0,
                    'POE::Component::Pluggable::Constants' => 0,
-                   'POE::Filter::BigBrother'              => 0,
+                   'POE::Filter::BigBrother'              => '0.12',
 
                    # build/test prereqs
                    'Test::More'                           => '0.60',
@@ -30,15 +38,3 @@ WriteMakefile(
     clean => { FILES => 'POE-Component-Server-BigBrother-*' }
 );
 
-package MY;
-
-sub postamble {
-    <<'END_OF_POSTAMBLE';
-
-pm_to_blib: README
-
-README: lib/POE/Component/Server/BigBrother.pm
-	pod2text lib/POE/Component/Server/BigBrother.pm >README
-
-END_OF_POSTAMBLE
-} ## end sub postamble

@@ -22,7 +22,7 @@ use POE::Filter::BigBrother;
 
 use vars qw($VERSION);
 
-$VERSION='0.01';
+$VERSION='0.02';
 
 sub spawn {
     my $package = shift;
@@ -77,7 +77,7 @@ sub _on_dispatch {
 
 sub _dispatch {
     my ( $self, $event, @args ) = @_;
-    ### _dispatch event: $event
+    ## _dispatch event: $event
 	return 1 if $self->_pluggable_process('MESSAGE', $event, \(@args)) == PLUGIN_EAT_ALL;
 
     my %sessions;
@@ -106,24 +106,25 @@ sub _start {
     ## will be referred to by the name "server_tcp" when necessary.
     ## It listen on port 1984.  It uses POE::Filter::Block to parse
     ## input and format output.
-    $self->{listener} = POE::Component::Server::TCP->new(
+    $self->{listener} =
+      POE::Component::Server::TCP->new(
         ( $self->{alias} ? ( Alias => $self->{alias} . '_tcp_listener' ) : () ),
-        Args => [ self => $self ],
+        Args               => [ self => $self ],
         Port               => $self->{bind_port},
-		Error			   => \&_on_tcp_server_error,
+        Concurrency        => 1,
+        Error              => \&_on_tcp_server_error,
         ClientConnected    => \&_on_client_connect,
-        ClientDisconnected => sub { $_[KERNEL]->alarm_remove_all() },
-        ClientFilter       => POE::Filter::BigBrother->new(),
-        ClientInput        => \&_on_client_input,
-        InlineStates       => {
-            '_conn_alarm' => \&_conn_alarm,
-        },
-    );
+        ClientDisconnected => sub    { $_[KERNEL]->alarm_remove_all() },
+        ClientFilter => POE::Filter::BigBrother->new(),
+        ClientInput  => \&_on_client_input,
+        InlineStates => { '_conn_alarm' => \&_conn_alarm, },
+      );
 
     return;
 } ## end sub _start
 
 sub _conn_alarm {
+	### _conn_alarm
 	$_[KERNEL]->yield('shutdown');
 }
 
@@ -191,7 +192,7 @@ sub _on_shutdown {
 
 sub _on_tcp_server_error {
 	my ($syscall_name, $error_number, $error_string) = @_[ARG0, ARG1, ARG2];
-	die "BigBrother Gateway: $syscall_name error because $error_string";
+	croak "BigBrother Gateway: $syscall_name error because $error_string\n";
 }
 
 sub _on_client_connect {
@@ -226,13 +227,18 @@ sub _on_client_input {
 					/sx
       ) {
         my $message;
-        my $command = $1;
-        $message->{command}   = $command;
-		$message->{offset}	  = $2;
-        $message->{host_name} = $3;
-        $message->{probe}     = $4;
-        $message->{color}     = $5;
-        $message->{data}      = $6;
+        my $command = lc($1);
+        $message->{command}    = $command;
+		$message->{offset}	   = $2 if defined $2;
+        $message->{host_name}  = $3;
+        $message->{probe}      = $4;
+		if ($command eq 'disable' or $command eq 'enable') {
+			$message->{period} = $5;
+		}
+		else {
+			$message->{color}  = $5;	
+		}
+        $message->{data}       = $6;
 
 		# Strip optional args like in status+30 command
 		$command =~ s/\W.*$//;
@@ -265,7 +271,7 @@ __END__
 
 =head1 NAME
 
-POE::Component::Server::BigBrother - a POE Component that implements BigBrother daemon functionality
+POE::Component::Server::BigBrother - POE Component that implements BigBrother daemon functionality
 
 =head1 SYNOPSIS
 

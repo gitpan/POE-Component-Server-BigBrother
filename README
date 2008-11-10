@@ -1,5 +1,5 @@
 NAME
-    POE::Component::Server::BigBrother - a POE Component that implements
+    POE::Component::Server::BigBrother - POE Component that implements
     BigBrother daemon functionality
 
 SYNOPSIS

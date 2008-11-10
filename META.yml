@@ -1,7 +1,7 @@
 --- #YAML:1.0
 name:                POE-Component-Server-BigBrother
-version:             0.01
-abstract:            a POE Component that implements BigBrother daemon functionality
+version:             0.02
+abstract:            POE Component that implements BigBrother daemon functionality
 license:             perl
 author:              
     - Yves Blusseau
@@ -13,7 +13,7 @@ requires:
     POE::Component::Pluggable:     0
     POE::Component::Pluggable::Constants: 0
     POE::Component::Server::TCP:   0
-    POE::Filter::BigBrother:       0
+    POE::Filter::BigBrother:       0.12
     Test::More:                    0.60
 meta-spec:
     url:     http://module-build.sourceforge.net/META-spec-v1.3.html
