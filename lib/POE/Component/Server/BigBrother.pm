@@ -22,7 +22,7 @@ use POE::Filter::BigBrother;
 
 use vars qw($VERSION);
 
-$VERSION='0.02';
+$VERSION='0.03';
 
 sub spawn {
     my $package = shift;
@@ -214,39 +214,45 @@ sub _on_client_input {
     my ( $kernel, $heap, $input ) = @_[ KERNEL, HEAP, ARG0 ];
     my $bb_server = $heap->{bb_server};
     _delay_timeout( $kernel, $bb_server );
-    if (
-        $input =~ m/^
+	if (
+		$input =~ m/^
 					((?:(?:(?:dis|en)abl|pag)e|status)) # the command ($1)
 				    (\+\d+)? 		# the offset ($2)
 					\s+				# some spaces
 					(\S+?)\.(\S+)	# server.probe ($3, $4)
 					\s+ 			# some spaces
-					(\w+) 			# the color or time ($5)
-					\s+ 			# some spaces
-					(.*)$ 			# Datas ($6)
+					(.*)$ 			# last args ($5)
 					/sx
       ) {
         my $message;
         my $command = lc($1);
-        $message->{command}    = $command;
-		$message->{offset}	   = $2 if defined $2;
-        $message->{host_name}  = $3;
-        $message->{probe}      = $4;
-		if ($command eq 'disable' or $command eq 'enable') {
-			$message->{period} = $5;
-		}
-		else {
-			$message->{color}  = $5;	
-		}
-        $message->{data}       = $6;
+        $message->{command}   = $command;
+        $message->{offset}    = $2 if defined $2;
+        $message->{host_name} = $3;
+        $message->{probe}     = $4;
+        my $args 			  = $5;
 
 		# Strip optional args like in status+30 command
 		$command =~ s/\W.*$//;
 
-		## $message;
         $message->{host_name} =~ tr/,/./;    # Translate server fqdn
 
+        if ( $command eq 'enable' ) {    # Enable command
+            $message->{data} = $args;
+        }
+		else {
+            my ( $arg1, $arg2 ) = split( /\s+/, $args, 2 );
+            if ( $command eq 'status' or $command eq 'page' ) {
+                $message->{color} = $arg1;
+            }
+			else {   # Disable command
+                $message->{period} = $arg1;
+            }
+            $message->{data} = $arg2;
+        }
+		
 		$bb_server->_dispatch ( $bb_server->{_pluggable_prefix} . $command, $message, $bb_server );
+	
 	} elsif ($input =~ m/^(?:event\s+activation)/i) {
 		# TO DO		
     } elsif ($input =~ m/^stop/i) {

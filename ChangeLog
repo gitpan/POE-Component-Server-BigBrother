@@ -1,3 +1,9 @@
+2008-11-26  Yves BLUSSEAU  <yblusseau@cpan.org>
+
+	* Version 0.03 released
+	* lib/POE/Component/Server/BigBrother.pm (_on_client_input):
+	  fix a bug decoding enable messages
+
 2008-11-10  Yves BLUSSEAU  <yblusseau@cpan.org>
 
 	* Version 0.02 released

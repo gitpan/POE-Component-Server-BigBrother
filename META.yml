@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                POE-Component-Server-BigBrother
-version:             0.02
+version:             0.03
 abstract:            POE Component that implements BigBrother daemon functionality
 license:             perl
 author:              
