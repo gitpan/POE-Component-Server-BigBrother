@@ -1,3 +1,8 @@
+2009-06-15  Yves BLUSSEAU  <yblusseau@cpan.org>
+
+	* Version 0.04 released
+	* Add functions to parse BigBrother events
+
 2008-11-26  Yves BLUSSEAU  <yblusseau@cpan.org>
 
 	* Version 0.03 released

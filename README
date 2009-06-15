@@ -151,7 +151,7 @@ BUGS
     of progress on your bug as I make changes.
 
 COPYRIGHT & LICENSE
-    Copyright 2008 Yves Blusseau. All rights reserved.
+    Copyright 2008-2009 Yves Blusseau. All rights reserved.
 
     POE::Component::Server::BigBrother is free software; you may use,
     redistribute, and/or modify it under the same terms as Perl itself.

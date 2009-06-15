@@ -17,12 +17,15 @@ use POE;
 use POE::Component::Pluggable::Constants qw(:ALL);
 use POE::Component::Server::TCP;
 use POE::Filter::BigBrother;
+use POE::Filter::Stream;
+
+use Log::Report syntax => 'SHORT';
 
 # use Smart::Comments;
 
 use vars qw($VERSION);
 
-$VERSION='0.03';
+$VERSION='0.04';
 
 sub spawn {
     my $package = shift;
@@ -56,7 +59,7 @@ sub spawn {
         ( ref($options) eq 'HASH' ? ( options => $options ) : () ),
                                               )->ID();
     return $self;
-} ## end sub spawn
+}
 
 sub shutdown {
   my $self = shift;
@@ -89,7 +92,7 @@ sub _dispatch {
         $sessions{$_} = $_;
     }
     $poe_kernel->post( $_, $event, @args ) for values %sessions;
-} ## end sub _dispatch
+}
 
 sub _start {
     my ( $kernel, $self, $sender ) = @_[ KERNEL, OBJECT, SENDER ];
@@ -99,8 +102,6 @@ sub _start {
     } else {
         $kernel->refcount_increment( $self->{session_id} => __PACKAGE__ );
     }
-
-    # $self->{filter} = POE::Filter::Stream->new();
 
     ## Create a tcp server that receives BigBrother messages.  It
     ## will be referred to by the name "server_tcp" when necessary.
@@ -114,14 +115,14 @@ sub _start {
         Concurrency        => 1,
         Error              => \&_on_tcp_server_error,
         ClientConnected    => \&_on_client_connect,
-        ClientDisconnected => sub    { $_[KERNEL]->alarm_remove_all() },
-        ClientFilter => POE::Filter::BigBrother->new(),
-        ClientInput  => \&_on_client_input,
-        InlineStates => { '_conn_alarm' => \&_conn_alarm, },
+        ClientDisconnected => \&_on_client_disconnect,
+        ClientFilter       => POE::Filter::Stream->new(),
+        ClientInput        => \&_on_client_input,
+        InlineStates       => { '_conn_alarm' => \&_conn_alarm, },
       );
 
     return;
-} ## end sub _start
+}
 
 sub _conn_alarm {
 	### _conn_alarm
@@ -165,7 +166,7 @@ sub _on_unregister {
         }
     }
     return;
-} ## end sub unregister
+}
 
 sub _unregister_sessions {
   my $self = shift;
@@ -207,24 +208,28 @@ sub _on_client_connect {
 	}
 	my $self = delete $args{self};
 	$heap->{bb_server} = $self; # store self object on the client session as server
+    $heap->{buffer}  = '';
 	_delay_timeout($kernel, $self);
 }
 
 sub _on_client_input {
-    my ( $kernel, $heap, $input ) = @_[ KERNEL, HEAP, ARG0 ];
-    my $bb_server = $heap->{bb_server};
-    _delay_timeout( $kernel, $bb_server );
-	if (
-		$input =~ m/^
-					((?:(?:(?:dis|en)abl|pag)e|status)) # the command ($1)
-				    (\+\d+)? 		# the offset ($2)
-					\s+				# some spaces
-					(\S+?)\.(\S+)	# server.probe ($3, $4)
-					\s+ 			# some spaces
-					(.*)$ 			# last args ($5)
-					/sx
+    # Accumulate datas
+    $_[HEAP]->{buffer} .= $_[ARG0];
+}
+
+sub _decode_bb_message {
+    my ($self, $input) = @_;
+    my $message = undef;
+    if (
+        $input =~ m/^
+                    ((?:(?:(?:dis|en)abl|pag)e|status)) # the command ($1)
+                    (\+\d+)? 		# the offset ($2)
+                    \s+				# some spaces
+                    (\S+?)\.(\S+)	# server.probe ($3, $4)
+                    \s+ 			# some spaces
+                    (.*)$ 			# last args ($5)
+                   /sx
       ) {
-        my $message;
         my $command = lc($1);
         $message->{command}   = $command;
         $message->{offset}    = $2 if defined $2;
@@ -232,15 +237,11 @@ sub _on_client_input {
         $message->{probe}     = $4;
         my $args 			  = $5;
 
-		# Strip optional args like in status+30 command
-		$command =~ s/\W.*$//;
-
         $message->{host_name} =~ tr/,/./;    # Translate server fqdn
 
         if ( $command eq 'enable' ) {    # Enable command
             $message->{data} = $args;
-        }
-		else {
+        } else {
             my ( $arg1, $arg2 ) = split( /\s+/, $args, 2 );
             if ( $command eq 'status' or $command eq 'page' ) {
                 $message->{color} = $arg1;
@@ -250,17 +251,36 @@ sub _on_client_input {
             }
             $message->{data} = $arg2;
         }
-		
-		$bb_server->_dispatch ( $bb_server->{_pluggable_prefix} . $command, $message, $bb_server );
-	
-	} elsif ($input =~ m/^(?:event\s+activation)/i) {
-		# TO DO		
-    } elsif ($input =~ m/^stop/i) {
-		$kernel->post($bb_server->{session_id},'shutdown');
+    } elsif ($input =~ m/^(?:event\s+)(.+)$/si) {
+		$message = { command => 'event', params => $1 };
     } else {
-        warn "Unknown message:".substr($input,0,80),$/;
+        warning "Unknown BB message: ".substr($input,0,80);
     }
-} ## end sub on_client_input
+
+    return $message;
+}
+
+sub _on_client_disconnect {
+    my ( $kernel, $heap ) = @_[ KERNEL, HEAP ];
+
+    # Remove all alarms
+    $kernel->alarm_remove_all();
+
+    # Check if we have receive some datas
+    if (length $heap->{buffer}) {
+        # Create a new filter to parse raw BB messages
+        my $filter = POE::Filter::BigBrother->new();
+        my $bb_server = $heap->{bb_server};
+        # Decode any BB messages
+        foreach my $cooked_input ( @{ $filter->get( [ $heap->{buffer} ] ) } ) {
+            if ( my $message = $bb_server->_decode_bb_message($cooked_input) ) {
+                $bb_server->_dispatch(
+                          $bb_server->{_pluggable_prefix} . $message->{command},
+                          $message, $bb_server );
+            }
+        }
+    }
+}
 
 sub _delay_timeout {
 	my ($kernel,$self) = @_;
@@ -465,7 +485,7 @@ your bug as I make changes.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Yves Blusseau. All rights reserved.
+Copyright 2008-2009 Yves Blusseau. All rights reserved.
 
 POE::Component::Server::BigBrother is free software; you may use, redistribute,
 and/or modify it under the same terms as Perl itself.
