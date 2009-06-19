@@ -25,7 +25,7 @@ use Log::Report syntax => 'SHORT';
 
 use vars qw($VERSION);
 
-$VERSION='0.05';
+$VERSION='0.06';
 
 sub spawn {
     my $package = shift;
@@ -113,7 +113,6 @@ sub _start {
         Args               => [ self => $self ],
         Address            => $self->{bind_addr},
         Port               => $self->{bind_port},
-        Concurrency        => 1,
         Error              => \&_on_tcp_server_error,
         ClientConnected    => \&_on_client_connect,
         ClientDisconnected => \&_on_client_disconnect,

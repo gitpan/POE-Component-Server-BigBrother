@@ -1,13 +1,10 @@
---- #YAML:1.0
-name:                POE-Component-Server-BigBrother
-version:             0.05
-abstract:            POE Component that implements BigBrother daemon functionality
-license:             perl
-author:              
-    - Yves Blusseau
-generated_by:        ExtUtils::MakeMaker version 6.44
-distribution_type:   module
-requires:     
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         POE-Component-Server-BigBrother
+version:      0.06
+version_from: lib/POE/Component/Server/BigBrother.pm
+installdirs:  vendor
+requires:
     Carp:                          0
     Log::Report:                   0.18
     POE:                           0.38
@@ -17,6 +14,6 @@ requires:
     POE::Filter::BigBrother:       0.12
     POE::Filter::Stream:           1.2220
     Test::More:                    0.60
-meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.30_01

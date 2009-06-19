@@ -1,4 +1,9 @@
-2009-06-19  Yves BLUSSEAU  <yblusseau.ext@orange-ftgroup.com>
+2009-06-19  Yves BLUSSEAU  <yblusseau@cpan.org>
+
+	* Version 0.06 release
+	* Removing concurrency checks
+
+2009-06-19  Yves BLUSSEAU  <yblusseau@cpan.org>
 
 	* Version 0.05 released
 	* Add bind_addr argument so we can specify the bind address
