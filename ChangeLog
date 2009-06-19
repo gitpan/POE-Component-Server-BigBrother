@@ -1,3 +1,8 @@
+2009-06-19  Yves BLUSSEAU  <yblusseau.ext@orange-ftgroup.com>
+
+	* Version 0.05 released
+	* Add bind_addr argument so we can specify the bind address
+
 2009-06-15  Yves BLUSSEAU  <yblusseau@cpan.org>
 
 	* Version 0.04 released

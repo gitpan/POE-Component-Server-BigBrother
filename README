@@ -46,6 +46,7 @@ CONSTRUCTOR
         Optional parameters:
 
           'alias', set an alias on the component;
+          'bind_addr', specify an address to listen on, default is INADDR_ANY;
           'bind_port', specify a port to listen on, default is 1984;
           'time_out', specify a time out in seconds for socket connections, default is 30;
 
@@ -138,6 +139,9 @@ OUTPUT EVENTS
 
    "bb_disable"
     This events are generated upon receipt of disable messages.
+
+   "bb_event"
+    This events are generated upon receipt of event messages.
 
 AUTHOR
     Yves Blusseau <yblusseau@cpan.org>

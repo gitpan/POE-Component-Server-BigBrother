@@ -39,4 +39,3 @@ WriteMakefile(
     },
     clean => { FILES => 'POE-Component-Server-BigBrother-*' }
 );
-

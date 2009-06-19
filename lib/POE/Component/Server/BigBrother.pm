@@ -25,7 +25,7 @@ use Log::Report syntax => 'SHORT';
 
 use vars qw($VERSION);
 
-$VERSION='0.04';
+$VERSION='0.05';
 
 sub spawn {
     my $package = shift;
@@ -111,6 +111,7 @@ sub _start {
       POE::Component::Server::TCP->new(
         ( $self->{alias} ? ( Alias => $self->{alias} . '_tcp_listener' ) : () ),
         Args               => [ self => $self ],
+        Address            => $self->{bind_addr},
         Port               => $self->{bind_port},
         Concurrency        => 1,
         Error              => \&_on_tcp_server_error,
@@ -347,6 +348,7 @@ It is based in part on code shamelessly borrowed from L<POE::Component::IRC>
 Optional parameters:
 
   'alias', set an alias on the component;
+  'bind_addr', specify an address to listen on, default is INADDR_ANY;
   'bind_port', specify a port to listen on, default is 1984;
   'time_out', specify a time out in seconds for socket connections, default is 30;
 
@@ -470,6 +472,10 @@ This events are generated upon receipt of enable messages.
 =head3 C<bb_disable>
 
 This events are generated upon receipt of disable messages.
+
+=head3 C<bb_event>
+
+This events are generated upon receipt of event messages.
 
 =head1 AUTHOR
 
