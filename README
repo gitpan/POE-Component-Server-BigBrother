@@ -7,12 +7,15 @@ SYNOPSIS
      use POE;
      use POE::Component::Server::BigBrother;
 
-     POE::Component::Server::BigBrother->spawn( alias => 'BigBrother_Server' );
+     POE::Component::Server::BigBrother->spawn(
+         alias => 'BigBrother_Server',
+         msg_max_size => 8192,
+     );
 
      POE::Session->create(
-           package_states => [
-               'main' => { 'bb_status' => '_message' },
-               'main' => [ qw ( _start ) ] ]
+         package_states => [
+           'main' => { 'bb_status' => '_message' },
+           'main' => [ qw ( _start ) ] ],
      );
 
      $poe_kernel->run();
@@ -49,6 +52,7 @@ CONSTRUCTOR
           'bind_addr', specify an address to listen on, default is INADDR_ANY;
           'bind_port', specify a port to listen on, default is 1984;
           'time_out', specify a time out in seconds for socket connections, default is 30;
+          'max_msg_size', specify the max size for a message, default is 16384;
 
         Returns a POE::Component::Server::BigBrother object.
 

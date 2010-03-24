@@ -1,3 +1,10 @@
+2010-03-24  Yves Blusseau  <yblusseau@cpan.org>
+
+	* Version 0.07 release
+	* lib/POE/Component/Server/BigBrother.pm: Add new option to specify
+	max message size
+	Truncate too long messages
+
 2009-06-19  Yves BLUSSEAU  <yblusseau@cpan.org>
 
 	* Version 0.06 release

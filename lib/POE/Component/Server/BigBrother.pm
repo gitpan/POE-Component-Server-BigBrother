@@ -25,7 +25,13 @@ use Log::Report syntax => 'SHORT';
 
 use vars qw($VERSION);
 
-$VERSION='0.06';
+$VERSION='0.07';
+
+#
+# constants
+#
+use constant DATA_TRUNCATED_MESSAGE        => "... DATA TRUNCATED ...";
+use constant DATA_TRUNCATED_MESSAGE_LENGTH => length(DATA_TRUNCATED_MESSAGE);
 
 sub spawn {
     my $package = shift;
@@ -36,10 +42,11 @@ sub spawn {
     my $self = bless \%opts, $package;
 
 	$self->_pluggable_init(prefix => 'bb_', types => [ 'MESSAGE', 'EVENT' ]);
-	
-	# dafault values
-	$self->{time_out}  ||= 30;      # default time_out
-    $self->{bind_port} ||= 1984;    # default bind port
+
+    # default values
+    $self->{time_out}  ||= 30;        # default time_out
+    $self->{bind_port} ||= 1984;      # default bind port
+    $self->{max_msg_size} ||= 16384;  # default max message size
 
     $self->{session_id} = POE::Session->create(
         object_states => [
@@ -113,6 +120,7 @@ sub _start {
         Args               => [ self => $self ],
         Address            => $self->{bind_addr},
         Port               => $self->{bind_port},
+	Concurrency        => -1,
         Error              => \&_on_tcp_server_error,
         ClientConnected    => \&_on_client_connect,
         ClientDisconnected => \&_on_client_disconnect,
@@ -220,6 +228,15 @@ sub _on_client_input {
 sub _decode_bb_message {
     my ($self, $input) = @_;
     my $message = undef;
+    my $input_length = length($input);
+
+    if ( $input_length > $self->{max_msg_size} ) {
+        print STDERR "Truncated too long BigBrother message ($input_length > ",
+          $self->{max_msg_size} . "):\n", substr( $input, 0, 80 ), "\n";
+        my $pos = $self->{max_msg_size} - DATA_TRUNCATED_MESSAGE_LENGTH;
+        substr( $input, $pos, $input_length - $pos, DATA_TRUNCATED_MESSAGE );
+    }
+
     if (
         $input =~ m/^
                     ((?:(?:(?:dis|en)abl|pag)e|status)) # the command ($1)
@@ -305,12 +322,15 @@ POE::Component::Server::BigBrother - POE Component that implements BigBrother da
  use POE;
  use POE::Component::Server::BigBrother;
 
- POE::Component::Server::BigBrother->spawn( alias => 'BigBrother_Server' );
+ POE::Component::Server::BigBrother->spawn(
+     alias => 'BigBrother_Server',
+     msg_max_size => 8192,
+ );
 
  POE::Session->create(
-       package_states => [
-           'main' => { 'bb_status' => '_message' },
-           'main' => [ qw ( _start ) ] ]
+     package_states => [
+       'main' => { 'bb_status' => '_message' },
+       'main' => [ qw ( _start ) ] ],
  );
 
  $poe_kernel->run();
@@ -350,6 +370,7 @@ Optional parameters:
   'bind_addr', specify an address to listen on, default is INADDR_ANY;
   'bind_port', specify a port to listen on, default is 1984;
   'time_out', specify a time out in seconds for socket connections, default is 30;
+  'max_msg_size', specify the max size for a message, default is 16384;
 
 Returns a POE::Component::Server::BigBrother object.
 
