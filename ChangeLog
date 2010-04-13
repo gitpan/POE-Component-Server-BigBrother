@@ -1,13 +1,18 @@
+2010-04-13  Yves Blusseau  <yblusseau@cpan.org>
+
+	* Version 0.08 released
+	* lib/POE/Component/Server/BigBrother.pm (_start): Adapt to POE::Component::Server::TCP v1.020 new args
+
 2010-03-24  Yves Blusseau  <yblusseau@cpan.org>
 
-	* Version 0.07 release
+	* Version 0.07 released
 	* lib/POE/Component/Server/BigBrother.pm: Add new option to specify
 	max message size
 	Truncate too long messages
 
 2009-06-19  Yves BLUSSEAU  <yblusseau@cpan.org>
 
-	* Version 0.06 release
+	* Version 0.06 released
 	* Removing concurrency checks
 
 2009-06-19  Yves BLUSSEAU  <yblusseau@cpan.org>

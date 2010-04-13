@@ -25,7 +25,7 @@ use Log::Report syntax => 'SHORT';
 
 use vars qw($VERSION);
 
-$VERSION='0.07';
+$VERSION='0.08';
 
 #
 # constants
@@ -110,6 +110,10 @@ sub _start {
         $kernel->refcount_increment( $self->{session_id} => __PACKAGE__ );
     }
 
+    # Adapt to POE::Component::Server::TCP v1.020 new args
+    my $poco_tcp_args
+      = POE::Component::Server::TCP->VERSION > 1.007 ? "ClientArgs" : "Args";
+
     ## Create a tcp server that receives BigBrother messages.  It
     ## will be referred to by the name "server_tcp" when necessary.
     ## It listen on port 1984.  It uses POE::Filter::Block to parse
@@ -117,10 +121,10 @@ sub _start {
     $self->{listener} =
       POE::Component::Server::TCP->new(
         ( $self->{alias} ? ( Alias => $self->{alias} . '_tcp_listener' ) : () ),
-        Args               => [ self => $self ],
+        $poco_tcp_args     => [ self => $self ],
         Address            => $self->{bind_addr},
         Port               => $self->{bind_port},
-	Concurrency        => -1,
+        Concurrency        => -1,
         Error              => \&_on_tcp_server_error,
         ClientConnected    => \&_on_client_connect,
         ClientDisconnected => \&_on_client_disconnect,
